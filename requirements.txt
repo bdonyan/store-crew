@@ -1,1 +1,3 @@
-Flask\nflask-cors\ncrewai
+Flask
+flask-cors
+crewai
