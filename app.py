@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 from crewai import Agent, Crew, Task, Process
-from crewai_tools.serper import SerperDevTool  # Correctly importing SerperDevTool
+from crewai_tools import SerperDevTool 
 
 app = Flask(__name__)
 CORS(app)
