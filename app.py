@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
-from crewai import Agent
+from crewai import Agent, Task, Crew
 from crewai_tools import SerperDevTool
 
 app = Flask(__name__)
@@ -14,6 +14,9 @@ OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 if not SERPER_API_KEY or not OPENAI_API_KEY:
     raise ValueError("Environment variables for API keys are not set.")
 
+# Initialize tools
+search_tool = SerperDevTool(api_key=SERPER_API_KEY)
+
 # Initialize agents
 tor = Agent(
     role='Sales Bot',
@@ -21,7 +24,7 @@ tor = Agent(
     verbose=True,
     memory=True,
     backstory="Tor is a friendly and efficient sales bot designed to help users find the products they need.",
-    tools=[],
+    tools=[search_tool],  # Assign tools here
     allow_delegation=True
 )
 
@@ -34,8 +37,6 @@ mika = Agent(
     tools=[]
 )
 
-search_tool = SerperDevTool(api_key=os.environ["SERPER_API_KEY"])
-
 kaa = Agent(
     role='Product Manager',
     goal='Searches the product inventory based on keywords provided by Tor and Mika.',
@@ -46,8 +47,7 @@ kaa = Agent(
     allow_delegation=True
 )
 
-from crewai import Task
-
+# Define tasks
 sales_task = Task(
     description="Assist the user in finding the products they are looking for.",
     expected_output="A list of recommended products based on user input.",
@@ -68,8 +68,6 @@ pm_task = Task(
     tools=[search_tool]
 )
 
-from crewai import Crew, Process
-
 # Forming the crew
 crew = Crew(
     agents=[tor, mika, kaa],
@@ -84,21 +82,21 @@ crew = Crew(
 def get_response_tor():
     data = request.json
     user_input = data['user_input']
-    result = tor.respond(user_input)
+    result = tor.tools[0].run(user_input)  # Use the tool associated with Tor
     return jsonify({'response': result})
 
 @app.route('/get_response_mika', methods=['POST'])
 def get_response_mika():
     data = request.json
     user_input = data['user_input']
-    result = mika.respond(user_input)
+    result = mika.tools[0].run(user_input) if mika.tools else "No tools available"
     return jsonify({'response': result})
 
 @app.route('/get_response_kaa', methods=['POST'])
 def get_response_kaa():
     data = request.json
     user_input = data['user_input']
-    result = kaa.respond(user_input)
+    result = kaa.tools[0].run(user_input)
     return jsonify({'response': result})
 
 @app.route('/')
