@@ -1,8 +1,8 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
-from crewai import Agent, Crew, Task, Process
-from crewai_tools import SerperDevTool 
+from crewai import Agent, Task, Crew, Process
+from crewai_tools.serper import SerperDevTool
 
 app = Flask(__name__)
 CORS(app)
@@ -14,9 +14,6 @@ OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 if not SERPER_API_KEY or not OPENAI_API_KEY:
     raise ValueError("Environment variables for API keys are not set.")
 
-# Initialize the search tool
-search_tool = SerperDevTool(api_key=SERPER_API_KEY)
-
 # Initialize agents
 tor = Agent(
     role='Sales Bot',
@@ -24,7 +21,7 @@ tor = Agent(
     verbose=True,
     memory=True,
     backstory="Tor is a friendly and efficient sales bot designed to help users find the products they need.",
-    tools=[search_tool],  # Adding search_tool to the tools list
+    tools=[],
     allow_delegation=True
 )
 
@@ -37,13 +34,15 @@ mika = Agent(
     tools=[]
 )
 
+search_tool = SerperDevTool(api_key=SERPER_API_KEY)
+
 kaa = Agent(
     role='Product Manager',
     goal='Searches the product inventory based on keywords provided by Tor and Mika.',
     verbose=True,
     memory=True,
     backstory="Kaa is responsible for searching the product inventory and providing accurate results.",
-    tools=[search_tool],  # Adding search_tool to the tools list
+    tools=[search_tool],
     allow_delegation=True
 )
 
@@ -51,7 +50,7 @@ sales_task = Task(
     description="Assist the user in finding the products they are looking for.",
     expected_output="A list of recommended products based on user input.",
     agent=tor,
-    tools=[search_tool]  # Adding search_tool to the tools list
+    tools=[]
 )
 
 manager_task = Task(
@@ -64,7 +63,7 @@ pm_task = Task(
     description="Search the product inventory based on provided keywords.",
     expected_output="Product details for the requested products.",
     agent=kaa,
-    tools=[search_tool]  # Adding search_tool to the tools list
+    tools=[search_tool]
 )
 
 # Forming the crew
@@ -81,7 +80,7 @@ crew = Crew(
 def get_response_tor():
     data = request.json
     user_input = data['user_input']
-    result = tor.tools[0].run(user_input)  # Using the first tool, which is the SerperDevTool
+    result = search_tool.run(user_input)
     return jsonify({'response': result})
 
 @app.route('/get_response_mika', methods=['POST'])
@@ -95,7 +94,7 @@ def get_response_mika():
 def get_response_kaa():
     data = request.json
     user_input = data['user_input']
-    result = kaa.tools[0].run(user_input)  # Using the first tool, which is the SerperDevTool
+    result = search_tool.run(user_input)
     return jsonify({'response': result})
 
 @app.route('/')
