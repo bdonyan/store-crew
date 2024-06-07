@@ -101,5 +101,10 @@ def get_response_kaa():
     result = kaa.respond(user_input)
     return jsonify({'response': result})
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+@app.route('/')
+def home():
+    return "Hello, Heroku!"
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
