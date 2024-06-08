@@ -63,3 +63,6 @@ Contributions are welcome! Please submit a pull request or open an issue to disc
 ## License
 
 This project is licensed under the MIT License. See the LICENSE file for more information.
+
+![image](https://github.com/bdonyan/store-crew/assets/66976326/86d92349-43ea-463d-827f-1648950daa5f)
+
